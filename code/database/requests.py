@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import profile
 from sqlalchemy import and_
 from utils import setup_logger
@@ -87,12 +89,11 @@ async def check_admin(*, chat_id: int):
 
 
 async def add_event_to_table(*, event_name: str, event_description: str,
-                             event_date: str, is_signup_open: int = 1,
-                             event_limit: int = 40
-                             ):
+                             event_date: datetime, is_signup_open: int = 1,
+                             event_limit: int = 40):
     async with async_session() as session:
         session.add(Event(name=event_name, description=event_description,
-                          date=event_date,
+                          date=event_date,  # Make sure this is a datetime object
                           limit=event_limit,
                           is_signup_open=is_signup_open))
         await session.commit()
