@@ -75,7 +75,7 @@ class UserProfile(Base):
     __tablename__ = "user_profiles"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    chat_id: Mapped[int] = mapped_column(Integer, unique=True)
+    chat_id: Mapped[int] = mapped_column(BigInteger, unique=True)
     nickname: Mapped[str] = mapped_column(String(100))
     is_itmo: Mapped[bool] = mapped_column(Boolean)
     level: Mapped[int] = mapped_column(Integer)
