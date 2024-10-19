@@ -1,4 +1,8 @@
+from datetime import datetime
+
 import profile
+from pickle import FALSE
+
 from sqlalchemy import and_
 from utils import setup_logger
 from database.models import Admin, BannedUser, UserInMailing, Event, EventSingUp, UserProfile
@@ -13,6 +17,10 @@ logger = setup_logger()
 async def get_events():
     async with async_session() as session:
         return await session.scalars(select(Event))
+
+async def get_unremoved_events():
+    async with async_session() as session:
+        return await session.scalars(select(Event).where(Event.removed == False))
 
 
 async def add_in_mailing(*, chat_id: int):
@@ -87,14 +95,14 @@ async def check_admin(*, chat_id: int):
 
 
 async def add_event_to_table(*, event_name: str, event_description: str,
-                             event_date: str, is_signup_open: int = 1,
-                             event_limit: int = 40
-                             ):
+                             event_date: datetime, is_signup_open: int = 1,
+                             event_limit: int = 40, removed: bool = False):
     async with async_session() as session:
         session.add(Event(name=event_name, description=event_description,
-                          date=event_date,
+                          date=event_date,  # Make sure this is a datetime object
                           limit=event_limit,
-                          is_signup_open=is_signup_open))
+                          is_signup_open=is_signup_open,
+                          removed=removed))
         await session.commit()
 
 
@@ -103,6 +111,11 @@ async def delete_event_from_table(*, event_id: int):
         await session.execute(delete(Event).where(Event.id == event_id))
         await session.commit()
         await session.execute((delete(EventSingUp).where(EventSingUp.event_id == event_id)))
+        await session.commit()
+
+async def remove_event_from_table(*, event_id: int):
+    async with async_session() as session:
+        await session.execute(update(Event).where(Event.id == event_id).values(removed=True))
         await session.commit()
 
 
