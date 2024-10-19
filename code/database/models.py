@@ -1,18 +1,24 @@
-from sqlalchemy import Boolean, String, Integer, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
-from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
+from datetime import datetime
 
-from config import DB_FILE
+from sqlalchemy import Boolean
+from sqlalchemy import String, Integer, ForeignKey, TIMESTAMP
+from sqlalchemy.ext.asyncio import AsyncAttrs, async_sessionmaker, create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+from config import DB_USER, DB_PASSWORD, DB_NAME, DB_PORT, DB_HOST
+
+# Use your PostgreSQL database URL
+DATABASE_URL = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
 # Создаём бд и подключаемся к ней
-engine = create_async_engine(url="sqlite+aiosqlite:///" + DB_FILE)
+engine = create_async_engine(url=DATABASE_URL)
 async_session = async_sessionmaker(engine)
 
+
 # Создаём родительский класс для построения моделей
-
-
 class Base(AsyncAttrs, DeclarativeBase):
     pass
+
 
 # Таблица с забаненными пользователями
 
@@ -23,6 +29,7 @@ class BannedUser(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[int] = mapped_column(Integer)
 
+
 # Таблица с пользователями, которые находятся в рассылке
 
 
@@ -31,6 +38,7 @@ class UserInMailing(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[int] = mapped_column(Integer)
+
 
 # Таблица с айди чата администраторов
 
@@ -41,6 +49,7 @@ class Admin(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[int] = mapped_column(Integer)
 
+
 # Таблица для мероприятий
 
 
@@ -49,10 +58,11 @@ class Event(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(60))
-    date: Mapped[str] = mapped_column(String(14))
+    date: Mapped[datetime] = mapped_column(TIMESTAMP)  # Using TIMESTAMP for events
     limit: Mapped[int] = mapped_column(Integer, default=40)
     description: Mapped[str] = mapped_column(String(150))
     is_signup_open: Mapped[int] = mapped_column(Integer)
+
 
 # Таблица для записавшихся на меропрития пользователей
 
@@ -68,6 +78,7 @@ class EventSingUp(Base):
     event_id: Mapped[int] = mapped_column(ForeignKey(Event.id))
     username: Mapped[str] = mapped_column(String(100), nullable=True)
 
+
 # Таблица профилей
 
 
@@ -79,6 +90,8 @@ class UserProfile(Base):
     nickname: Mapped[str] = mapped_column(String(100))
     is_itmo: Mapped[bool] = mapped_column(Boolean)
     level: Mapped[int] = mapped_column(Integer)
+
+
 # При запуске главного файла создаём таблицы
 
 
