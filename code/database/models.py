@@ -62,6 +62,7 @@ class Event(Base):
     limit: Mapped[int] = mapped_column(Integer, default=40)
     description: Mapped[str] = mapped_column(String(150))
     is_signup_open: Mapped[int] = mapped_column(Integer)
+    removed: Mapped[bool] = mapped_column(Boolean)
 
 
 # Таблица для записавшихся на меропрития пользователей

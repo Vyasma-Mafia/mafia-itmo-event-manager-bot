@@ -1,27 +1,29 @@
 import os
+from datetime import datetime
+from re import search, compile
 
-import bot.keyboards as kb
 import pandas as pd
-
 from aiogram import Router, F, Bot
-from aiogram.types import Message, CallbackQuery, FSInputFile
 from aiogram.filters import CommandStart, Filter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from database.requests import (check_ban, check_event_by_name, get_users_from_mailing, check_admin, add_in_ban,
-                               del_from_ban, add_in_admin, del_from_admin, add_event_to_table, get_events,
-                               check_event_by_id, get_event_name_by_id, delete_event_from_table, get_count_of_signup,
-                               del_from_mailing, get_event_info_by_name, get_signup_people,
-                               check_is_signup_open, close_signup_to_event, get_count_of_events)
-from re import search, compile
-from config import BOT_API
+from aiogram.types import Message, CallbackQuery, FSInputFile
 
+import bot.keyboards as kb
+from config import BOT_API
+from database.requests import (check_ban, check_event_by_name, get_users_from_mailing, check_admin, add_in_ban,
+                               del_from_ban, add_in_admin, del_from_admin, add_event_to_table, check_event_by_id,
+                               get_event_name_by_id, get_count_of_signup,
+                               del_from_mailing, get_event_info_by_name, get_signup_people,
+                               check_is_signup_open, close_signup_to_event, get_count_of_events,
+                               remove_event_from_table, get_unremoved_events)
 
 # Чтобы не писать dispatcher 2-й раз заменим его на роутер
 admin = Router()
 
 # Создаём переменную с ботом, чтобы в дальнейшем можно было отправить рассылку
 BOT = Bot(token=BOT_API)
+
 
 # Создаём класс (фильтр) для проверки админа
 
@@ -30,12 +32,14 @@ class AdminProtect(Filter):
     async def __call__(self, message: Message):
         return await check_admin(chat_id=message.from_user.id)
 
+
 # Создаём класс (фильтр) для проверки мероприятий
 
 
 class EventCheck(Filter):
     async def __call__(self, message: Message):
         return await check_event_by_name(event_name=message.text)
+
 
 # Создаём класс (состояние) для рассылки
 
@@ -82,7 +86,8 @@ class EventChoice(StatesGroup):
 @admin.message(AdminProtect(), CommandStart())
 async def start_command(message: Message):
     await message.answer_sticker("CAACAgIAAxkBAAEuTUVnBrozLFYSUZMvbHFKt2wY4tPUggAC-AgAAlwCZQPhVpkp0NcHSTYE")
-    await message.answer(f"Добро пожаловать, {message.from_user.first_name}!", reply_markup=await kb.get_start_menu(rights="admin"))
+    await message.answer(f"Добро пожаловать, {message.from_user.first_name}!",
+                         reply_markup=await kb.get_start_menu(rights="admin"))
 
 
 @admin.message(AdminProtect(), F.text == "⚙️Админ панель")
@@ -220,9 +225,11 @@ async def wait_mailing_photo(message: Message, state: FSMContext):
                                        reply_markup=await kb.get_confirm_menu(callback="confirm_mailing"))
             await state.set_state(Mailing.confirm)
         else:
-            await message.answer("Некорректный url адрес фотографии!\nПопробуйте ещё раз!", reply_markup=kb.admin_cancel_markup)
+            await message.answer("Некорректный url адрес фотографии!\nПопробуйте ещё раз!",
+                                 reply_markup=kb.admin_cancel_markup)
     else:
         await message.answer("Некорректное сообщение!\nПопробуйте ещё раз!", reply_markup=kb.admin_cancel_markup)
+
 
 # Обработаем кнопку для подтверждения/отмены рассылки
 
@@ -266,7 +273,8 @@ async def waiting_event_name(message: Message, state: FSMContext):
     if event_name is not None:
         if await check_event_by_name(event_name=event_name) is None:
             await state.update_data(name=event_name)
-            await message.answer("Введите дату и время мероприятия!\nПример: 12.02.2024 15:00", reply_markup=kb.admin_cancel_markup)
+            await message.answer("Введите дату и время мероприятия!\nПример: 12.02.2024 15:00",
+                                 reply_markup=kb.admin_cancel_markup)
             await state.set_state(AddEvent.date)
         else:
             await message.answer("Мероприятие с таким названием уже существует!", reply_markup=kb.admin_panel)
@@ -290,7 +298,7 @@ async def waiting_date_of_event(message: Message, state: FSMContext):
         if (year % 4 == 0 and year % 100 != 0 or year % 400 == 0):
             last_days_in_month[1] = 29
         # Проверяем введённую дату на корректность
-        if (day <= last_days_in_month[month-1]):
+        if (day <= last_days_in_month[month - 1]):
             await state.update_data(date=date)
             await message.answer("Введите описание мероприятия!", reply_markup=kb.admin_cancel_markup)
             await state.set_state(AddEvent.description)
@@ -305,7 +313,8 @@ async def waiting_event_desc(message: Message, state: FSMContext):
     description = message.text
     if description is not None:
         await state.update_data(description=description)
-        await message.answer("Введите лимит участников для мероприятия (целое число):", reply_markup=kb.admin_cancel_markup)
+        await message.answer("Введите лимит участников для мероприятия (целое число):",
+                             reply_markup=kb.admin_cancel_markup)
         await state.set_state(AddEvent.limit)
     else:
         await message.answer("Некорректное описание!\nПопробуйте ещё раз!", reply_markup=kb.admin_cancel_markup)
@@ -329,7 +338,8 @@ async def waiting_event_limit(message: Message, state: FSMContext):
                                  reply_markup=await kb.get_confirm_menu(callback="confirm_add_event"))
             await state.set_state(AddEvent.confirm)
         else:
-            await message.answer("Лимит должен быть положительным числом!\nПопробуйте ещё раз!", reply_markup=kb.admin_cancel_markup)
+            await message.answer("Лимит должен быть положительным числом!\nПопробуйте ещё раз!",
+                                 reply_markup=kb.admin_cancel_markup)
     except ValueError:
         await message.answer("Некорректный лимит!\nВведите целое число!", reply_markup=kb.admin_cancel_markup)
 
@@ -343,10 +353,11 @@ async def confirm_create_event_callback(callback: CallbackQuery, state: FSMConte
     if callback.data == "confirm_add_event":
         data_from_state: dict = await state.get_data()
         event_name: str = data_from_state.get("name")
-        event_date: str = data_from_state.get("date")
+        event_date: datetime = datetime.strptime(data_from_state.get("date"), "%d.%m.%Y %H:%M")
         event_description: str = data_from_state.get("description")
         event_limit: int = data_from_state.get("limit")
-        await add_event_to_table(event_name=event_name, event_description=event_description, event_date=event_date, event_limit=event_limit)
+        await add_event_to_table(event_name=event_name, event_description=event_description, event_date=event_date,
+                                 event_limit=event_limit)
         await callback.message.answer("Мероприятие добавлено!", reply_markup=kb.admin_panel)
         await state.clear()
     else:
@@ -359,7 +370,7 @@ async def confirm_create_event_callback(callback: CallbackQuery, state: FSMConte
 async def btn_delete_event_click(message: Message, state: FSMContext):
     if await get_count_of_events() > 0:
         events_enumerate: str = ""
-        for event in await get_events():
+        for event in await get_unremoved_events():
             events_enumerate += f"{event.id}. {event.name}\n"
         await message.answer(f"Отправьте номер мероприятия!\n{events_enumerate}", reply_markup=kb.admin_cancel_markup)
         await state.set_state(DelEvent.id)
@@ -391,7 +402,7 @@ async def confirm_del_event_callback(callback: CallbackQuery, state: FSMContext)
     if callback.data == "confirm_del_event":
         data_from_state: dict = await state.get_data()
         event_id: str = data_from_state.get("id")
-        await delete_event_from_table(event_id=int(event_id))
+        await remove_event_from_table(event_id=int(event_id))
         await callback.message.answer("Мероприятие удалено!", reply_markup=kb.admin_panel)
         await state.clear()
     else:
@@ -404,6 +415,7 @@ async def confirm_del_event_callback(callback: CallbackQuery, state: FSMContext)
 async def btn_back_click(message: Message, state: FSMContext):
     await message.answer("Открываю меню", reply_markup=await kb.get_start_menu(rights="admin"))
     await state.clear()
+
 
 # Обработаем нажатие по одному из мероприятий
 
