@@ -60,7 +60,7 @@ class Event(Base):
     name: Mapped[str] = mapped_column(String(60))
     date: Mapped[datetime] = mapped_column(TIMESTAMP)  # Using TIMESTAMP for events
     limit: Mapped[int] = mapped_column(Integer, default=40)
-    description: Mapped[str] = mapped_column(String(150))
+    description: Mapped[str] = mapped_column(String(400))
     is_signup_open: Mapped[int] = mapped_column(Integer)
     removed: Mapped[bool] = mapped_column(Boolean)
 
