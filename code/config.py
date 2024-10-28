@@ -16,6 +16,7 @@ DB_PASSWORD = get_config_value("POSTGRES_PASSWORD")
 DB_HOST = get_config_value("POSTGRES_HOST")
 DB_PORT = get_config_value("POSTGRES_PORT")
 DB_NAME=os.environ.get("POSTGRES_DB")
+ACHIEVEMENT_SERVICE_HOST=os.environ.get("ACHIEVEMENT_SERVICE_HOST")
 
 # ADMIN_CHAT_ID = config_env.get("ADMIN_CHAT_ID")
 # ADMIN_CHAT_ID = '..ADMIN_CHAT_ID'

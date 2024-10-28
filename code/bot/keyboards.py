@@ -95,6 +95,7 @@ async def get_start_menu(*, rights: str):
     keyboard = ReplyKeyboardBuilder()
     keyboard.add(KeyboardButton(text="🎉Мероприятия"))
     keyboard.add(KeyboardButton(text="📝Редактировать профиль"))
+    keyboard.add(KeyboardButton(text="🌟Мои достижения"))
     if rights == "admin":
         keyboard.add(KeyboardButton(text=f"⚙️Админ панель"))
     else:

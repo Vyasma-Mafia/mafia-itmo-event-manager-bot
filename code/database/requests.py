@@ -2,6 +2,7 @@ from datetime import datetime
 
 import profile
 from pickle import FALSE
+from typing import Optional
 
 from sqlalchemy import and_
 from utils import setup_logger
@@ -264,6 +265,7 @@ async def save_user_profile(chat_id: int,
                             nickname: str,
                             is_itmo: bool,
                             level: int,
+                            polemica_id: Optional[int]
                             ):
     async with async_session() as session:
         profile = await session.scalar(select(UserProfile).where(UserProfile.chat_id == chat_id))
@@ -271,15 +273,17 @@ async def save_user_profile(chat_id: int,
             profile.nickname = nickname
             profile.level = level
             profile.is_itmo = is_itmo
+            profile.polemica_id = polemica_id
         else:
             session.add(UserProfile(chat_id=chat_id,
                                     nickname=nickname,
                                     is_itmo=is_itmo,
-                                    level=level
+                                    level=level,
+                                    polemica_id=polemica_id
                                     ))
         await session.commit()
 
 
-async def get_user_profile(chat_id: int):
+async def get_user_profile(chat_id: int) -> Optional[UserProfile]:
     async with async_session() as session:
         return await session.scalar(select(UserProfile).where(UserProfile.chat_id == chat_id))
