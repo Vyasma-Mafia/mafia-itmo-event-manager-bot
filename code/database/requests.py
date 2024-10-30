@@ -287,3 +287,8 @@ async def save_user_profile(chat_id: int,
 async def get_user_profile(chat_id: int) -> Optional[UserProfile]:
     async with async_session() as session:
         return await session.scalar(select(UserProfile).where(UserProfile.chat_id == chat_id))
+
+
+async def get_users_with_polemica_id() -> list[UserProfile]:
+    async with async_session() as session:
+        return await session.scalars(select(UserProfile).where(UserProfile.polemica_id != None))

@@ -7,6 +7,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
 from plugins.achievements import get_user_achievements_text
+from plugins.rating import get_club_rating
 from utils import setup_logger
 from database.requests import (check_ban, check_event_by_name, add_in_mailing, get_event_info_by_name, check_signup,
                                check_go_to_event, get_full_info_about_singup_user, change_signup_status,
@@ -138,13 +139,15 @@ async def btn_support_click(message: Message):
 @user.message(F.text == "🌟Мои достижения")
 async def btn_my_achievements(message: Message):
     await message.chat.do("typing")
-    user = await get_user_profile(message.from_user.id)
-    if user is None or user.polemica_id is None:
-        await message.answer("Незарегистрированный пользователь или нет polemica id",
+    await message.answer(await get_club_rating(), parse_mode="HTML",
                              reply_markup=await kb.get_user_cancel_button())
-    else:
-        await message.answer(get_user_achievements_text(user.polemica_id), parse_mode="HTML",
-                             reply_markup=await kb.get_user_cancel_button())
+    # user = await get_user_profile(message.from_user.id)
+    # if user is None or user.polemica_id is None:
+    #     await message.answer("Незарегистрированный пользователь или нет polemica id",
+    #                          reply_markup=await kb.get_user_cancel_button())
+    # else:
+    #     await message.answer(get_user_achievements_text(user.polemica_id), parse_mode="HTML",
+    #                          reply_markup=await kb.get_user_cancel_button())
     return
 
 
