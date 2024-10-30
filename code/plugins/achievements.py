@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 
 import requests
 
@@ -12,6 +12,7 @@ class Achievement:
     description: str
     name: str
     id: str
+    order: int
     levels: List[int]
 
 
@@ -54,25 +55,37 @@ def deserialize_achievements_with_gains(json_data: str) -> AchievementsWithGains
     return AchievementsWithGains(achievements=achievements, achievementsGains=achievements_gains)
 
 
-def get_user_achievement(achievement: Achievement, achievement_gain: AchievementGainAnswer):
+def get_level_emoji(level: int) -> str:
+    level_emojis = {
+        0: "➖",
+        1: "⭐",
+        2: "🌟",
+        3: "💫",
+        4: "🚀",
+        5: "🏆"
+    }
+    return level_emojis.get(level, "")
+
+
+def get_user_achievement(achievement: Achievement, level: int = 0, progress: int = 0) -> str:
     return f"""
-<b>{achievement.name}</b> Уровень {achievement_gain.achievementLevel}
+{get_level_emoji(level)} <u>{level}</u> <b>{achievement.name}</b> {get_my_level(achievement, level, progress)} 
     <i>{achievement.description}</i>
-    Уровни: {levelsString(achievement)}
-    Прогресс: {achievement_gain.achievementCounter}
 """
 
 
-def levelsString(achievement):
-    return " / ".join(map(str, achievement.levels))
+def get_my_level(achievement: Achievement, level: Optional[int], progress: int):
+    if level is None:
+        level = 0
+    next_level_score = "∞" if (level == len(achievement.levels)) else achievement.levels[level]
+    return f"({progress} / {next_level_score})"
 
 
-def get_achievement(achievement: Achievement):
-    return f"""
-<b>{achievement.name}</b>
-    <i>{achievement.description}</i>
-    Уровни: {levelsString(achievement)}
-"""
+def levelsString(achievement: Achievement):
+    levels = []
+    for i in range(len(achievement.levels)):
+        levels.append((achievement.levels[i], i + 1))
+    return "/".join(map(lambda it: f"{it[0]} {get_level_emoji(it[1])}", levels))
 
 
 def get_user_achievements_text(polemica_id: int) -> str:
@@ -89,8 +102,8 @@ def get_user_achievements_text(polemica_id: int) -> str:
         achievement = achievements_map[achievement_gain.achievementId]
         achievements_map.pop(achievement.id)
         achievements_messages.append(
-            get_user_achievement(achievement, achievement_gain))
+            get_user_achievement(achievement, achievement_gain.achievementLevel, achievement_gain.achievementCounter))
     for achievement in achievements_map.values():
         achievements_messages.append(
-            get_achievement(achievement))
-    return "\n".join(achievements_messages)
+            get_user_achievement(achievement))
+    return "".join(achievements_messages)
