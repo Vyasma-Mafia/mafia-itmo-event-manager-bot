@@ -18,6 +18,7 @@ async def get_events():
     async with async_session() as session:
         return await session.scalars(select(Event))
 
+
 async def get_unremoved_events():
     async with async_session() as session:
         return await session.scalars(select(Event).where(Event.removed == False))
@@ -112,6 +113,7 @@ async def delete_event_from_table(*, event_id: int):
         await session.commit()
         await session.execute((delete(EventSingUp).where(EventSingUp.event_id == event_id)))
         await session.commit()
+
 
 async def remove_event_from_table(*, event_id: int):
     async with async_session() as session:
@@ -237,8 +239,12 @@ async def get_signup_people(*, event_name: str):
             "Никнейм": [],
             "вуз": []
         }
-        signup_people = await session.scalars(select(EventSingUp).where((EventSingUp.event_status == 1) &
-                                                                        (EventSingUp.event_id == id_of_event)))
+        signup_people = await session.scalars(
+            select(EventSingUp)
+            .where((EventSingUp.event_status == 1) &
+                   (EventSingUp.event_id == id_of_event))
+            .order_by(EventSingUp.id)
+        )
         for user in signup_people:
             user_profile_data = await get_user_profile(chat_id=user.chat_id)
             people["Полное имя"] += [user.full_name]
@@ -267,9 +273,9 @@ async def save_user_profile(chat_id: int,
             profile.is_itmo = is_itmo
         else:
             session.add(UserProfile(chat_id=chat_id,
-                        nickname=nickname,
-                        is_itmo=is_itmo,
-                        level=level
+                                    nickname=nickname,
+                                    is_itmo=is_itmo,
+                                    level=level
                                     ))
         await session.commit()
 
