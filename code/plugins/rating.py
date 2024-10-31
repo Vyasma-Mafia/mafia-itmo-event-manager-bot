@@ -26,8 +26,8 @@ async def get_club_rating() -> str:
         if len(db_users) == 0:
             continue
         db_user: UserProfile = db_users[0]
-        username = db_user.nickname
 
+        username = db_user.nickname
         # Суммируем totalScores и totalAwards из всех категорий
         total_score = sum(category["totalScores"] for category in user["metrics"].values())
         total_awards = sum(category["totalAwards"] for category in user["metrics"].values())
