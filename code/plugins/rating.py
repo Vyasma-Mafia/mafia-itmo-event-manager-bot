@@ -13,7 +13,7 @@ async def get_club_rating() -> str:
     resp = requests.get(
         "https://app.polemicagame.com/v1/clubs/289/metrics?startDate=2024-09-01T00:00:00.000&endDate=2025-08-31T23:59:59.999")
     if resp.status_code != 200:
-        logger.log(resp.text)
+        logger.warn(resp.text)
         return "Неизвестная ошибка"
     data = json.loads(resp.text)
     registered_users: list[UserProfile] = list(await get_users_with_polemica_id())
