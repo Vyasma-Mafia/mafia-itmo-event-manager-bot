@@ -4,6 +4,7 @@ from typing import List, Optional
 
 import requests
 
+from bot.user import logger
 from config import ACHIEVEMENT_SERVICE_HOST
 from database.models import UserProfile
 
@@ -125,6 +126,7 @@ def get_club_stars_achievements_text(users: list[UserProfile]) -> str:
     response = requests.get(f"http://{ACHIEVEMENT_SERVICE_HOST}/achievements/_top",
                             params={"userIds": list(map(lambda it: it.polemica_id, users))})
     if response.status_code != 200:
+        logger.log(response.text)
         return "Произошла неизвестная ошибка"
     users_from_polemica_id = {}
     for user in users:
