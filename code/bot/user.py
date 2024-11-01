@@ -427,6 +427,7 @@ async def edit_profile(message: Message, state: FSMContext):
         profile_text = f"""Игровой ник: {user_profile.nickname}
         Уровень: {kb.get_level_info_by_id(user_profile.level)['level_name']}
         Из ИТМО: {user_profile.is_itmo}
+        Polemica id: {user_profile.polemica_id}
         """
         message_to_send = f"Ваш профиль:\n{profile_text}\nПриступаем к пересозданию профиля...\n\n"
     await message.answer(message_to_send + "Введите ваш никнейм:", reply_markup=await kb.get_user_cancel_button())
