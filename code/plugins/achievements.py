@@ -4,10 +4,11 @@ from typing import List, Optional
 
 import requests
 
-from bot.user import logger
 from config import ACHIEVEMENT_SERVICE_HOST
 from database.models import UserProfile
+from utils import setup_logger
 
+logger = setup_logger()
 
 @dataclass
 class Achievement:
