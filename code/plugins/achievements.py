@@ -80,7 +80,7 @@ def get_user_achievement(achievement: Achievement, with_desc: bool, level: int =
 
 
 def get_header(name: str, achievement: Achievement, level: int = 0, progress: int = 0):
-    return f"{get_level_emoji(level)} <u>{level}</u> <i>{name}</i> {get_my_level(achievement, level, progress)}"
+    return f"{get_level_emoji(level)} <u>{level}</u> <b>{name}</b> {get_my_level(achievement, level, progress)}"
 
 
 def get_achievement_user_header(name: str, achievement: Achievement, level: int = 0, progress: int = 0):
