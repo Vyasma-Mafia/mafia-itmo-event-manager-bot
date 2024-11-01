@@ -104,6 +104,7 @@ def levelsString(achievement: Achievement):
 def get_user_achievements_text(polemica_id: int, with_desc: bool = False) -> str:
     response = requests.get(f"http://{ACHIEVEMENT_SERVICE_HOST}/achievements", params={"ids": polemica_id})
     if response.status_code != 200:
+        logger.warn(response.text)
         return "Произошла неизвестная ошибка"
     ans = deserialize_achievements_with_gains(response.text)
     achievements_map: dict[str, Achievement] = {}
