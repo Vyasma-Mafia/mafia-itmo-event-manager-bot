@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import unique
 
 from sqlalchemy import Boolean
 from sqlalchemy import String, Integer, ForeignKey, TIMESTAMP, BigInteger
@@ -88,9 +89,11 @@ class UserProfile(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[int] = mapped_column(BigInteger, unique=True)
+    polemica_id: Mapped[int] = mapped_column(BigInteger, nullable=True)
     nickname: Mapped[str] = mapped_column(String(100))
     is_itmo: Mapped[bool] = mapped_column(Boolean)
     level: Mapped[int] = mapped_column(Integer)
+
 
 
 # При запуске главного файла создаём таблицы
