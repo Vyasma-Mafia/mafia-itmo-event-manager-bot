@@ -38,5 +38,5 @@ async def get_club_rating() -> str:
     # Выводим топ-результат
     ranks_texts = []
     for rank, user in enumerate(ranking, 1):
-        ranks_texts.append(f"<code>{rank}. {user['username'].ljust(15)} {user['totalScores']}</code>")
+        ranks_texts.append(f"<code>{rank}. {user['username'].ljust(20)} {user['totalScores']:.2f}</code>")
     return "\n".join(ranks_texts)
