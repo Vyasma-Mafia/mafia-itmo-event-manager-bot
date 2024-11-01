@@ -1,10 +1,7 @@
 import json
-from dataclasses import dataclass
-from typing import List, Optional
 
 import requests
 
-from config import ACHIEVEMENT_SERVICE_HOST
 from database.models import UserProfile
 from database.requests import get_users_with_polemica_id
 from utils import setup_logger

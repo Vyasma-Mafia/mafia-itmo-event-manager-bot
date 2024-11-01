@@ -1,24 +1,19 @@
-from email.policy import default
-from tkinter.ttk import Label
-
-import bot.keyboards as kb
-
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command, CommandStart, Filter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import Message, CallbackQuery
 
+import bot.keyboards as kb
 from bot.keyboards import CLUB_RATING_BUTTON_DATA, STARS_BUTTON_DATA, MY_ACHIEVMENTS_BUTTON_DATA
-from plugins.achievements import get_user_achievements_text, get_club_stars_achievements_text
-from plugins.rating import get_club_rating
-from utils import setup_logger
 from database.requests import (check_ban, check_event_by_name, add_in_mailing, get_event_info_by_name, check_signup,
                                check_go_to_event, get_full_info_about_singup_user, change_signup_status,
                                add_signup_user,
                                get_count_of_events, check_is_signup_open, get_signup_people, get_user_profile,
                                save_user_profile, get_users_with_polemica_id)
-from re import compile, search
+from plugins.achievements import get_user_achievements_text, get_club_stars_achievements_text
+from plugins.rating import get_club_rating
+from utils import setup_logger
 
 logger = setup_logger()
 

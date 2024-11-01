@@ -1,5 +1,4 @@
 from datetime import datetime
-from enum import unique
 
 from sqlalchemy import Boolean
 from sqlalchemy import String, Integer, ForeignKey, TIMESTAMP, BigInteger

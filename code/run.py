@@ -1,11 +1,13 @@
 # Импортируем недостающие модули
 import logging
-from aiogram import Bot, Dispatcher
-from bot.user import user
-from bot.admin import admin
 from asyncio import run
-from database.models import async_main
+
+from aiogram import Bot, Dispatcher
+
+from bot.admin import admin
+from bot.user import user
 from config import BOT_API
+from database.models import async_main
 
 # Запуск бота
 

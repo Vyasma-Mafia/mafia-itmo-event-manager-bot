@@ -1,16 +1,13 @@
 from datetime import datetime
-
-import profile
-from pickle import FALSE
 from typing import Optional
 
 from sqlalchemy import and_
-from utils import setup_logger
+from sqlalchemy import select, delete, update, func
+
+from config import ADMIN_CHAT_ID
 from database.models import Admin, BannedUser, UserInMailing, Event, EventSingUp, UserProfile
 from database.models import async_session
-from config import ADMIN_CHAT_ID, BOT_API
-from sqlalchemy import select, delete, update, func
-import logging
+from utils import setup_logger
 
 logger = setup_logger()
 
