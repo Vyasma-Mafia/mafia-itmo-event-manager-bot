@@ -1,3 +1,5 @@
+from unicodedata import category
+
 from aiogram import Router, F
 from aiogram.filters import Command, CommandStart, Filter
 from aiogram.fsm.context import FSMContext
@@ -57,6 +59,11 @@ class ProfileEdit(StatesGroup):
     level = State()
     polemica_id = State()
     is_itmo = State()
+
+
+class Achievements(StatesGroup):
+    submenu = State()
+    category = State()
 
 
 # Обработаем команду айди
@@ -145,7 +152,7 @@ async def btn_my_achievements(message: Message):
 
 
 @user.callback_query(F.data == MY_ACHIEVMENTS_BUTTON_DATA)
-async def btn_my_achievements(callback_query: CallbackQuery):
+async def btn_my_achievements(callback_query: CallbackQuery, state: FSMContext):
     message = callback_query.message
     await message.chat.do("typing")
     usr = await get_user_profile(message.chat.id)
@@ -153,8 +160,20 @@ async def btn_my_achievements(callback_query: CallbackQuery):
         await message.answer("Незарегистрированный пользователь или нет polemica id",
                              reply_markup=await kb.get_start_menu(rights="user"))
     else:
-        await message.answer(get_user_achievements_text(usr.polemica_id, True), parse_mode="HTML",
-                             reply_markup=await kb.get_start_menu(rights="user"))
+        await message.answer("Выберите категорию достижений", parse_mode="HTML",
+                             reply_markup=await kb.get_achievement_category_keyboard())
+        await state.set_state(Achievements.category)
+    return
+
+
+@user.callback_query(Achievements.category)
+async def btn_my_achievements_with_category(callback_query: CallbackQuery, state: FSMContext):
+    message = callback_query.message
+    await message.chat.do("typing")
+    usr = await get_user_profile(message.chat.id)
+    achievements_category = callback_query.data
+    await message.answer(get_user_achievements_text(usr.polemica_id, achievements_category, True), parse_mode="HTML",
+                         reply_markup=await kb.get_start_menu(rights="user"))
     return
 
 

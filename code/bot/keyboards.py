@@ -9,6 +9,24 @@ STARS_BUTTON_DATA = "stars"
 
 MY_ACHIEVMENTS_BUTTON_DATA = "my_achievements"
 
+ACHIEVEMENT_CATEGORIES = [{
+    "category_id": "common",
+    "category_symbol": "⚪",
+    "category_name": "Общие",
+},
+    {
+        "category_id": "red",
+        "category_symbol": "🔴",
+        "category_name": "Мирный и шериф",
+    },
+    {
+        "category_id": "black",
+        "category_symbol": "⚫",
+        "category_name": "Мафия и дон",
+    },
+
+]
+
 LEVEL_DESCR = [
     {
         "level_id": 1,
@@ -120,7 +138,15 @@ async def get_start_menu(*, rights: str):
     return keyboard.adjust(1).as_markup(resize_keyboard=True, input_field_placeholder="Выберите пункт меню...")
 
 
-async def get_achievement_rating_ment():
+async def get_achievement_category_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(
+            text=f"{category['category_symbol']} {category['category_name']}", callback_data=category['category_id'])]
+        for category in ACHIEVEMENT_CATEGORIES
+    ])
+
+
+def get_achievement_rating_ment():
     return
 
 
@@ -151,7 +177,6 @@ async def get_confirm_menu(callback: str):
 
 
 # Создаём меню с мероприятиями
-
 
 async def get_events_names_buttons():
     keyboard = ReplyKeyboardBuilder()

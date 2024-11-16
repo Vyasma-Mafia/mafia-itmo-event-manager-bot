@@ -16,6 +16,7 @@ class Achievement:
     name: str
     id: str
     order: int
+    category: str
     levels: List[int]
 
 
@@ -101,7 +102,7 @@ def levelsString(achievement: Achievement):
     return "/".join(map(lambda it: f"{it[0]} {get_level_emoji(it[1])}", levels))
 
 
-def get_user_achievements_text(polemica_id: int, with_desc: bool = False) -> str:
+def get_user_achievements_text(polemica_id: int, category: str, with_desc: bool = False) -> str:
     response = requests.get(f"http://{ACHIEVEMENT_SERVICE_HOST}/achievements", params={"ids": polemica_id})
     if response.status_code != 200:
         logger.warn(response.text)
@@ -109,12 +110,17 @@ def get_user_achievements_text(polemica_id: int, with_desc: bool = False) -> str
     ans = deserialize_achievements_with_gains(response.text)
     achievements_map: dict[str, Achievement] = {}
     for achievement in ans.achievements:
+        if achievement.category != category:
+            continue
         achievements_map[achievement.id] = achievement
 
     achievements_messages = []
     for achievement_gain in ans.achievementsGains:
-        achievement = achievements_map[achievement_gain.achievementId]
+        achievement = achievements_map.get(achievement_gain.achievementId, None)
+        if achievement is None:
+            continue
         achievements_map.pop(achievement.id)
+
         achievements_messages.append(
             get_user_achievement(achievement, with_desc, achievement_gain.achievementLevel,
                                  achievement_gain.achievementCounter))
