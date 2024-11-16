@@ -133,6 +133,7 @@ def get_user_achievements_text(polemica_id: int, category: str, with_desc: bool 
 def get_club_stars_achievements_text(users: list[UserProfile]) -> str:
     response = requests.get(f"http://{ACHIEVEMENT_SERVICE_HOST}/achievements/_top",
                             params={"userIds": list(map(lambda it: it.polemica_id, users))})
+    logger.info(f"achievement request: {response.status_code}")
     if response.status_code != 200:
         logger.warn(response.text)
         return "Произошла неизвестная ошибка"
@@ -149,6 +150,7 @@ def get_club_stars_achievements_text(users: list[UserProfile]) -> str:
         achievement_gains.append(achievement_gain)
 
     achievements_messages = []
+    achievements_messages.append(f"<b>Зал славы:</b>")
     for achievement, achievement_gains in achievements_map.values():
         achievement_gains: list[AchievementGainAnswer]
         if len(achievement_gains) == 0:
