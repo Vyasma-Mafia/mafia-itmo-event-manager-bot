@@ -254,7 +254,8 @@ async def get_signup_people(*, event_name: str):
             # Добавляем уровень
             # telegram_user = await bot.get_chat(user.chat_id)
             # people["Никнейм"].append(telegram_user.username)
-    return people
+        session.commit()
+        return people
 
 
 # Сохранение и получение профиля
