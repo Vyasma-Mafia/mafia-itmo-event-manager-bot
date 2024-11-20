@@ -174,6 +174,7 @@ async def btn_my_achievements_with_category(callback_query: CallbackQuery, state
     achievements_category = callback_query.data
     await message.answer(get_user_achievements_text(usr.polemica_id, achievements_category, True), parse_mode="HTML",
                          reply_markup=await kb.get_start_menu(rights="user"))
+    await state.clear()
     return
 
 
