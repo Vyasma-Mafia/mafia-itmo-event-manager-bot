@@ -163,6 +163,7 @@ async def btn_my_achievements(callback_query: CallbackQuery, state: FSMContext):
         await message.answer("Выберите категорию достижений", parse_mode="HTML",
                              reply_markup=await kb.get_achievement_category_keyboard())
         await state.set_state(Achievements.category)
+        await message.delete()
     return
 
 
@@ -174,6 +175,7 @@ async def btn_my_achievements_with_category(callback_query: CallbackQuery, state
     achievements_category = callback_query.data
     await message.answer(get_user_achievements_text(usr.polemica_id, achievements_category, True), parse_mode="HTML",
                          reply_markup=await kb.get_start_menu(rights="user"))
+    await message.delete()
     await state.clear()
     return
 
@@ -185,6 +187,7 @@ async def btn_stars(callback_query: CallbackQuery):
     text = get_club_stars_achievements_text(list(await get_users_with_polemica_id()))
     await message.answer("".join(text), parse_mode="HTML",
                          reply_markup=await kb.get_start_menu(rights="user"))
+    await message.delete()
     return
 
 
@@ -194,6 +197,8 @@ async def btn_rating(callback_query: CallbackQuery):
     await message.chat.do("typing")
     await message.answer(await get_club_rating(), parse_mode="HTML",
                          reply_markup=await kb.get_start_menu(rights="user"))
+    await message.delete()
+
     return
 
 
