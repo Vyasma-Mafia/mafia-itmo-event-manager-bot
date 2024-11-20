@@ -245,7 +245,7 @@ async def btn_event_name_click(message: Message, state: FSMContext, event_name: 
         event_name = message.text
         await state.set_state(EventSignUp.event_name)
         await state.update_data(event_name=event_name)
-        await message.answer_sticker("CAACAgIAAxkBAAEDpPBl1WcOfjU0kJaSf9y882BG36ONiwACMw4AApVxCUiC2Rae9Yv1wzQE")
+        # await message.answer_sticker("CAACAgIAAxkBAAEDpPBl1WcOfjU0kJaSf9y882BG36ONiwACMw4AApVxCUiC2Rae9Yv1wzQE")
 
     await state.set_state(EventSignUp.event_name)
     chat_id = message.from_user.id
