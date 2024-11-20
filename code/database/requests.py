@@ -228,6 +228,7 @@ async def get_count_of_events():
 
 async def get_signup_people(*, event_name: str):
     async with async_session() as session:
+        session.expire_all()
         id_of_event = (await session.scalar(select(Event).where(Event.name == event_name))).id
         people: dict = {
             "Полное имя": [],
@@ -254,7 +255,6 @@ async def get_signup_people(*, event_name: str):
             # Добавляем уровень
             # telegram_user = await bot.get_chat(user.chat_id)
             # people["Никнейм"].append(telegram_user.username)
-        session.commit()
         return people
 
 
