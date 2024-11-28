@@ -16,13 +16,16 @@ from database.requests import (check_ban, check_event_by_name, get_users_from_ma
                                get_event_name_by_id, get_count_of_signup,
                                del_from_mailing, get_event_info_by_name, get_signup_people,
                                check_is_signup_open, close_signup_to_event, get_count_of_events,
-                               remove_event_from_table, get_unremoved_events)
+                               remove_event_from_table, get_unremoved_events, get_chat_ids_for_users_in_mailing)
+from utils import setup_logger
 
 # Чтобы не писать dispatcher 2-й раз заменим его на роутер
 admin = Router()
 
 # Создаём переменную с ботом, чтобы в дальнейшем можно было отправить рассылку
 BOT = Bot(token=BOT_API)
+
+logger = setup_logger()
 
 
 # Создаём класс (фильтр) для проверки админа
@@ -45,6 +48,7 @@ class EventCheck(Filter):
 
 
 class Mailing(StatesGroup):
+    choose_event = State()
     message = State()
     photo = State()
     confirm = State()
@@ -191,8 +195,30 @@ async def wait_id_to_del_admin(message: Message, state: FSMContext):
 
 @admin.message(AdminProtect(), F.text == "🗣️Сделать рассылку")
 async def btn_mailing_click(message: Message, state: FSMContext):
-    await state.set_state(Mailing.message)
-    await message.answer("Отправьте сообщение для рассылки...", reply_markup=kb.admin_cancel_markup)
+    if await get_count_of_events() > 0:
+        events_enumerate: str = ""
+        for event in await get_unremoved_events():
+            events_enumerate += f"{event.id}. {event.name}\n"
+        await message.answer(f"Отправьте номер мероприятия!\n{events_enumerate}", reply_markup=kb.admin_cancel_markup)
+    else:
+        await message.answer("Нет мероприятий,которые можно удалить!", reply_markup=kb.admin_panel)
+        await state.clear()
+    await state.set_state(Mailing.choose_event)
+
+
+@admin.message(Mailing.choose_event)
+async def waiting_id_of_event(message: Message, state: FSMContext):
+    event_id = message.text
+    if event_id is not None and event_id.isdigit():
+        if await check_event_by_id(event_id=int(event_id)):
+            await state.update_data(event_id=event_id)
+            await state.set_state(Mailing.message)
+            await message.answer("Отправьте сообщение для рассылки...", reply_markup=kb.admin_cancel_markup)
+        else:
+            await message.answer("Мероприятия с таким номером не существует!", reply_markup=kb.admin_panel)
+            await state.clear()
+    else:
+        await message.answer("Некорректный номер!\nПопробуйте ещё раз!", reply_markup=kb.admin_cancel_markup)
 
 
 @admin.message(Mailing.message)
@@ -239,20 +265,20 @@ async def confirm_mailing_callback(callback: CallbackQuery, state: FSMContext):
     await callback.message.delete()
     if callback.data == "confirm_mailing":
         # Получаем список пользователей
-        users = await get_users_from_mailing()
         # Получаем сообщение админа
         data_from_state: dict = await state.get_data()
+        send_for_event_id: int = data_from_state.get("event_id")
         message_from_admin: str = data_from_state.get("message")
         photo_from_admin: str = data_from_state.get("photo")
+        users = await get_chat_ids_for_users_in_mailing(event_id=send_for_event_id)
         for user in users:
             try:
                 if photo_from_admin is None:
-                    await BOT.send_message(chat_id=user.chat_id, text=message_from_admin)
+                    await BOT.send_message(chat_id=user, text=message_from_admin)
                 else:
-                    await BOT.send_photo(chat_id=user.chat_id, photo=photo_from_admin, caption=message_from_admin)
+                    await BOT.send_photo(chat_id=user, photo=photo_from_admin, caption=message_from_admin)
             except:
-                # удаляем человека из рассылки, поскольку он заблокировал бота
-                await del_from_mailing(chat_id=user)
+                logger.error(f"Не удалось отправить сообщение пользователю {user}")
         await callback.message.answer("Рассылка завершена!", reply_markup=kb.admin_panel)
         await state.clear()
     else:
