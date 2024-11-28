@@ -1,4 +1,5 @@
 from datetime import datetime
+from logging import exception
 from typing import Optional
 
 from sqlalchemy import and_
@@ -78,6 +79,25 @@ async def del_from_admin(*, chat_id: int):
 async def get_users_from_mailing():
     async with async_session() as session:
         return await session.scalars(select(UserInMailing))
+
+
+async def get_chat_ids_for_users_in_mailing(event_id: int) -> list[int]:
+    async with async_session() as session:
+        # Define the query
+        query = (select(UserInMailing.chat_id)
+                 .join(EventSingUp, UserInMailing.chat_id == EventSingUp.chat_id)
+                 .where(EventSingUp.event_id == int(event_id))
+                 .where(EventSingUp.event_status == 1))
+
+        # Execute and fetch the results
+        try:
+            result = await session.execute(query)
+        except exception as e:
+            print(e)
+
+        chat_ids = result.scalars().all()
+
+        return chat_ids
 
 
 async def check_ban(*, chat_id: int):
