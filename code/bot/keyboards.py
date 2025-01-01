@@ -4,6 +4,7 @@ from aiogram.utils.keyboard import ReplyKeyboardBuilder
 from database.requests import get_unremoved_events
 
 CLUB_RATING_BUTTON_DATA = "club_rating"
+PAIR_RATING_BUTTON_DATA = "pair_rating"
 
 STARS_BUTTON_DATA = "stars"
 
@@ -105,6 +106,7 @@ achivement_rating_menu = InlineKeyboardMarkup(
         [InlineKeyboardButton(text="Мои достижения", callback_data=MY_ACHIEVMENTS_BUTTON_DATA)],
         [InlineKeyboardButton(text="Зал славы", callback_data=STARS_BUTTON_DATA)],
         [InlineKeyboardButton(text="Рейтинг клуба", callback_data=CLUB_RATING_BUTTON_DATA)],
+        [InlineKeyboardButton(text="Парные", callback_data=PAIR_RATING_BUTTON_DATA)],
     ]
 )
 
