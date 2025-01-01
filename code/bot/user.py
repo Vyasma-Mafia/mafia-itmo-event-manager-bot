@@ -1,3 +1,4 @@
+from logging import exception
 from unicodedata import category
 
 from aiogram import Router, F
@@ -7,7 +8,8 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
 
 import bot.keyboards as kb
-from bot.keyboards import CLUB_RATING_BUTTON_DATA, STARS_BUTTON_DATA, MY_ACHIEVMENTS_BUTTON_DATA
+from bot.keyboards import CLUB_RATING_BUTTON_DATA, STARS_BUTTON_DATA, MY_ACHIEVMENTS_BUTTON_DATA, \
+    PAIR_RATING_BUTTON_DATA
 from database.requests import (check_ban, check_event_by_name, add_in_mailing, get_event_info_by_name, check_signup,
                                check_go_to_event, get_full_info_about_singup_user, change_signup_status,
                                add_signup_user,
@@ -15,6 +17,7 @@ from database.requests import (check_ban, check_event_by_name, add_in_mailing, g
                                save_user_profile, get_users_with_polemica_id)
 from plugins.achievements import get_user_achievements_text, get_club_stars_achievements_text
 from plugins.rating import get_club_rating
+from plugins.research import get_pair_stat_text
 from utils import setup_logger
 
 logger = setup_logger()
@@ -64,6 +67,10 @@ class ProfileEdit(StatesGroup):
 class Achievements(StatesGroup):
     submenu = State()
     category = State()
+
+
+class PairRating(StatesGroup):
+    choose = State()
 
 
 # Обработаем команду айди
@@ -147,7 +154,6 @@ async def btn_my_achievements(message: Message):
     await message.answer("Выберите подменю",
                          parse_mode="HTML",
                          reply_markup=kb.achivement_rating_menu)
-
     return
 
 
@@ -198,7 +204,34 @@ async def btn_rating(callback_query: CallbackQuery):
     await message.answer(await get_club_rating(), parse_mode="HTML",
                          reply_markup=await kb.get_start_menu(rights="user"))
     await message.delete()
+    return
 
+
+@user.callback_query(F.data == PAIR_RATING_BUTTON_DATA)
+async def btn_pair_rating(callback_query: CallbackQuery, state: FSMContext):
+    message = callback_query.message
+    await message.chat.do("typing")
+    await message.answer("Введите polemica id двух пользователей через запятую для просмотра совместной статистики",
+                         parse_mode="HTML",
+                         reply_markup=None)
+    await state.set_state(PairRating.choose)
+    await message.delete()
+    return
+
+
+@user.message(PairRating.choose)
+async def pair_rating(message: Message, state: FSMContext):
+    await message.chat.do("typing")
+    try:
+        first_id, second_id = map(lambda it: int(it.strip()), message.text.split(","))
+        logger.info(f"Pair rating req for {first_id}, {second_id} from {message.chat.id}")
+        await message.answer(get_pair_stat_text(first_id, second_id),
+                             parse_mode="HTML",
+                             reply_markup=await kb.get_start_menu(rights="user"))
+    except Exception as e:
+        print(e)
+        await message.answer("Ошибка при вводе id", reply_markup=await kb.get_start_menu(rights="user"))
+    await state.clear()
     return
 
 
@@ -425,6 +458,7 @@ async def confirm_signup_callback(callback: CallbackQuery, state: FSMContext):
 
         user_chat_id: str = data_from_state.get("id")
         user_level = data_from_state.get("level")
+        user = await get_user_profile(chat_id=int(user_chat_id))
 
         await add_signup_user(
             event_name=event_name,
@@ -433,6 +467,8 @@ async def confirm_signup_callback(callback: CallbackQuery, state: FSMContext):
             username=username,
             level=user_level
         )
+        if not user.is_itmo:
+            await callback.message.answer("Не забудьте заполнить форму для проходки из /help")
         await callback.message.answer("Вы успешно записались!", reply_markup=await kb.get_events_names_buttons())
         await state.clear()
     else:
