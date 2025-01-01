@@ -425,6 +425,7 @@ async def confirm_signup_callback(callback: CallbackQuery, state: FSMContext):
 
         user_chat_id: str = data_from_state.get("id")
         user_level = data_from_state.get("level")
+        user = await get_user_profile(chat_id=int(user_chat_id))
 
         await add_signup_user(
             event_name=event_name,
@@ -433,6 +434,8 @@ async def confirm_signup_callback(callback: CallbackQuery, state: FSMContext):
             username=username,
             level=user_level
         )
+        if not user.is_itmo:
+            await callback.message.answer("Не забудьте заполнить форму для проходки из /help")
         await callback.message.answer("Вы успешно записались!", reply_markup=await kb.get_events_names_buttons())
         await state.clear()
     else:
