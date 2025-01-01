@@ -29,9 +29,9 @@ class PairStat:
 
 def deserialize_pair_stat(json_data: str) -> PairStat:
     data = jsonpickle.decode(json_data)
+    data["firstUser"] = None if "firstUser" not in data else PolemicaUser(**data["firstUser"])
+    data["secondUser"] = None if "secondUser" not in data else PolemicaUser(**data["secondUser"])
     ans = PairStat(**data)
-    ans.firstUser = PolemicaUser(**data["firstUser"])
-    ans.secondUser = PolemicaUser(**data["secondUser"])
     return ans
 
 
