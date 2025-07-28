@@ -1,4 +1,5 @@
 import json
+from asyncio import timeout
 from types import SimpleNamespace as Namespace
 from dataclasses import dataclass
 from typing import Optional
@@ -37,7 +38,8 @@ def deserialize_pair_stat(json_data: str) -> PairStat:
 
 def get_pair_stat_text(first_polemica_id: int, second_polemica_id: int) -> str:
     response = requests.get(f"http://{ACHIEVEMENT_SERVICE_HOST}/research/pairStat",
-                            params={"firstId": first_polemica_id, "secondId": second_polemica_id})
+                            params={"firstId": first_polemica_id, "secondId": second_polemica_id},
+                            timeout=30)
     if response.status_code != 200:
         logger.warn(response.text)
         return "Произошла неизвестная ошибка"
