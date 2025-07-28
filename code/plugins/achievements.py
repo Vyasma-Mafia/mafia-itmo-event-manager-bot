@@ -103,7 +103,7 @@ def levelsString(achievement: Achievement):
 
 
 def get_user_achievements_text(polemica_id: int, category: str, with_desc: bool = False) -> str:
-    response = requests.get(f"http://{ACHIEVEMENT_SERVICE_HOST}/achievements", params={"ids": polemica_id})
+    response = requests.get(f"{ACHIEVEMENT_SERVICE_HOST}/achievements", params={"ids": polemica_id})
     if response.status_code != 200:
         logger.warn(response.text)
         return "Произошла неизвестная ошибка"
@@ -131,7 +131,7 @@ def get_user_achievements_text(polemica_id: int, category: str, with_desc: bool 
 
 
 def get_club_stars_achievements_text(users: list[UserProfile]) -> str:
-    response = requests.get(f"http://{ACHIEVEMENT_SERVICE_HOST}/achievements/_top",
+    response = requests.get(f"{ACHIEVEMENT_SERVICE_HOST}/achievements/_top",
                             params={"userIds": list(map(lambda it: it.polemica_id, users))})
     logger.info(f"achievement request: {response.status_code}")
     if response.status_code != 200:

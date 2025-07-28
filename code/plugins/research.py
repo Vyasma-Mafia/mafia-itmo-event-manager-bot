@@ -37,7 +37,7 @@ def deserialize_pair_stat(json_data: str) -> PairStat:
 
 
 def get_pair_stat_text(first_polemica_id: int, second_polemica_id: int) -> str:
-    response = requests.get(f"http://{ACHIEVEMENT_SERVICE_HOST}/research/pairStat",
+    response = requests.get(f"{ACHIEVEMENT_SERVICE_HOST}/research/pairStat",
                             params={"firstId": first_polemica_id, "secondId": second_polemica_id},
                             timeout=30)
     if response.status_code != 200:
