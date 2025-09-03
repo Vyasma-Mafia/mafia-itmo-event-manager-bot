@@ -50,7 +50,6 @@ class EventCheck(Filter):
 class Mailing(StatesGroup):
     choose_event = State()
     message = State()
-    photo = State()
     confirm = State()
 
 
@@ -226,35 +225,11 @@ async def wait_mailing_message(message: Message, state: FSMContext):
     if message.text is not None:
         # Сохраняем сообщение и просим подтвердить рассылку
         await state.update_data(message=message.text)
-        await message.answer("Хотите добавить фоотграфию к рассылке?"
-                             "\nЕсли да, то прикрепите её url-адресс."
-                             "\nВ противном случае отправьте знак '-' следующим сообщением без кавычек",
-                             reply_markup=kb.admin_cancel_markup)
-        await state.set_state(Mailing.photo)
+        await message.answer(f"Подтвердите рассылку!\n\n{message.text}",
+                             reply_markup=await kb.get_confirm_menu(callback="confirm_mailing"))
+        await state.set_state(Mailing.confirm)
     else:
         await message.answer("Некорректное сообщение для рассылки!\nПопробуйте ещё раз!")
-
-
-@admin.message(Mailing.photo)
-async def wait_mailing_photo(message: Message, state: FSMContext):
-    data_from_state: dict = await state.get_data()
-    message_from_admin: str = data_from_state.get("message")
-    url_of_photo = message.text
-    if url_of_photo is not None:
-        if url_of_photo == "-":
-            await message.answer(f"Подтвердите рассылку!\n\n{message_from_admin}",
-                                 reply_markup=await kb.get_confirm_menu(callback="confirm_mailing"))
-            await state.set_state(Mailing.confirm)
-        elif search(compile("^(https|http)://.+/impg/.+$"), url_of_photo):
-            await state.update_data(photo=url_of_photo)
-            await message.answer_photo(f"{url_of_photo}", caption=f"Подтвердите рассылку!\n\n{message_from_admin}",
-                                       reply_markup=await kb.get_confirm_menu(callback="confirm_mailing"))
-            await state.set_state(Mailing.confirm)
-        else:
-            await message.answer("Некорректный url адрес фотографии!\nПопробуйте ещё раз!",
-                                 reply_markup=kb.admin_cancel_markup)
-    else:
-        await message.answer("Некорректное сообщение!\nПопробуйте ещё раз!", reply_markup=kb.admin_cancel_markup)
 
 
 # Обработаем кнопку для подтверждения/отмены рассылки
@@ -269,14 +244,10 @@ async def confirm_mailing_callback(callback: CallbackQuery, state: FSMContext):
         data_from_state: dict = await state.get_data()
         send_for_event_id: int = data_from_state.get("event_id")
         message_from_admin: str = data_from_state.get("message")
-        photo_from_admin: str = data_from_state.get("photo")
         users = await get_chat_ids_for_users_in_mailing(event_id=send_for_event_id)
         for user in users:
             try:
-                if photo_from_admin is None:
-                    await BOT.send_message(chat_id=user, text=message_from_admin)
-                else:
-                    await BOT.send_photo(chat_id=user, photo=photo_from_admin, caption=message_from_admin)
+                await BOT.send_message(chat_id=user, text=message_from_admin)
             except:
                 logger.error(f"Не удалось отправить сообщение пользователю {user}")
         await callback.message.answer("Рассылка завершена!", reply_markup=kb.admin_panel)
