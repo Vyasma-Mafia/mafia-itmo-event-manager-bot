@@ -106,10 +106,6 @@ async def start_command(message: Message):
 async def help_command(message: Message):
     links = [
         {
-            'text': 'Форма для записи гостей из других вузов',
-            'link': 'https://forms.yandex.ru/cloud/66f6cb8773cee77dbdffbd87/'
-        },
-        {
             'text': 'Как зарегистрироваться в клубе в приложении Polemica?',
             'link': 'https://t.me/mafia_itmo/54',
         },
