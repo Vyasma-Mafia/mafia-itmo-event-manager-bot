@@ -14,7 +14,7 @@ from database.requests import (check_ban, check_event_by_name, add_in_mailing, g
                                check_go_to_event, get_full_info_about_singup_user, change_signup_status,
                                add_signup_user,
                                get_count_of_events, check_is_signup_open, get_signup_people, get_user_profile,
-                               save_user_profile, get_users_with_polemica_id)
+                               save_user_profile, get_users_with_polemica_id, get_guest_count_for_event)
 from plugins.achievements import get_user_achievements_text, get_club_stars_achievements_text
 from plugins.rating import get_club_rating
 from plugins.research import get_pair_stat_text
@@ -62,6 +62,10 @@ class ProfileEdit(StatesGroup):
     level = State()
     polemica_id = State()
     is_itmo = State()
+    full_name = State()
+    passport = State()
+    phone = State()
+    personal_data_agreement = State()
 
 
 class Achievements(StatesGroup):
@@ -294,6 +298,8 @@ async def btn_event_name_click(message: Message, state: FSMContext, event_name: 
     is_signup_open = await check_is_signup_open(event_name=event_name)
     is_signup_open_str = "открыта" if is_signup_open is not None else "закрыта"
     event_status = 'unsigned' if is_signup_open is not None else ''
+    guest_count = await get_guest_count_for_event(event_name=event_name)
+    event_info_for_message += f"👥Гостей: {guest_count}/{event_info.guest_limit}\n"
 
     # Get the list of registered users
     registered_users = await get_signup_people(event_name=event_name)
@@ -418,6 +424,16 @@ async def btn_signup_click(message: Message, state: FSMContext):
                     "Заполните профиль, прежде чем записываться на мероприятие. Используйте кнопку '📝Редактировать профиль'",
                     reply_markup=await kb.get_start_menu(rights="user")
                 )
+            elif not user_profile.is_itmo:
+                if not all([user_profile.full_name, user_profile.passport, user_profile.phone]):
+                    await message.answer("Для записи на мероприятие, пожалуйста, заполните ФИО, паспорт и телефон в вашем профиле. "
+                                         "Эти данные необходимы для оформления проходки в университет.")
+                    return
+
+                guest_count = await get_guest_count_for_event(event_name)
+                if guest_count >= event_info.guest_limit:
+                    await message.answer("К сожалению, достигнут лимит гостей для этого мероприятия.")
+                    return
 
             elif current_signups >= event_info.limit:
                 await message.answer("К сожалению, достигнут лимит участников для этого мероприятия.")
@@ -508,13 +524,62 @@ async def process_is_itmo(message: Message, state: FSMContext):
         await message.answer("Пожалуйста, выберите 'Да, я из ИТМО' или 'Нет, я не из ИТМО'.")
         return
 
-    await state.update_data(is_itmo=message.text == "Да, я из ИТМО")
-    await message.answer(
-        'Напиши свой id с сайта Polemica. Если не зарегистрирован, то отправь "-"',
-        reply_markup=await kb.get_user_cancel_button(),
-        parse_mode="HTML"
-    )
-    await state.set_state(ProfileEdit.polemica_id)
+    is_itmo = message.text == "Да, я из ИТМО"
+    await state.update_data(is_itmo=is_itmo)
+
+    if not is_itmo:
+        await message.answer("Для оформления проходки в университет, пожалуйста, введите ваше ФИО:", reply_markup=await kb.get_user_cancel_button())
+        await state.set_state(ProfileEdit.full_name)
+    else:
+        await message.answer(
+            'Напиши свой id с сайта Polemica. Если не зарегистрирован, то отправь "-"',
+            reply_markup=await kb.get_user_cancel_button(),
+            parse_mode="HTML"
+        )
+        await state.set_state(ProfileEdit.polemica_id)
+    
+    
+@user.message(ProfileEdit.full_name)
+async def process_full_name(message: Message, state: FSMContext):
+    await state.update_data(full_name=message.text)
+    await message.answer("Введите ваш номер паспорта (10 цифр):", reply_markup=await kb.get_user_cancel_button())
+    await state.set_state(ProfileEdit.passport)
+
+
+@user.message(ProfileEdit.passport)
+async def process_passport(message: Message, state: FSMContext):
+    if len(message.text) == 10 and message.text.isdigit():
+        await state.update_data(passport=message.text)
+        await message.answer("Пожалуйста, введите ваш номер телефона (11 цифр, начиная с 8). Он нужен для проходки:", reply_markup=await kb.get_user_cancel_button())
+        await state.set_state(ProfileEdit.phone)
+    else:
+        await message.answer("Неверный формат паспорта. Пожалуйста, введите 10 цифр.")
+
+
+@user.message(ProfileEdit.phone)
+async def process_phone(message: Message, state: FSMContext):
+    if len(message.text) == 11 and message.text.isdigit() and message.text.startswith('8'):
+        await state.update_data(phone=message.text)
+        await message.answer(
+            'Даю согласие на обработку своих персональных данных в соответствии с ФЗ-152.',
+            reply_markup=await kb.get_personal_data_agreement_keyboard(),
+        )
+        await state.set_state(ProfileEdit.personal_data_agreement)
+    else:
+        await message.answer("Неверный формат телефона. Пожалуйста, введите 11 цифр, начиная с 8.")
+
+@user.message(ProfileEdit.personal_data_agreement)
+async def process_personal_data_agreement(message: Message, state: FSMContext):
+    if message.text == "✅Даю согласие":
+        await state.update_data(personal_data_agreement=True)
+        await message.answer(
+            'Напиши свой id с сайта Polemica. Если не зарегистрирован, то отправь "-"',
+            reply_markup=await kb.get_user_cancel_button(),
+            parse_mode="HTML"
+        )
+        await state.set_state(ProfileEdit.polemica_id)
+    else:
+        await message.answer("Для продолжения необходимо дать согласие на обработку персональных данных.")
 
 
 @user.message(ProfileEdit.polemica_id)
@@ -545,23 +610,39 @@ async def process_level(callback: CallbackQuery, state: FSMContext):
         level_data = data['level']
         polemica_id = data.get("polemica_id", None)
 
+        full_name = data.get("full_name")
+        passport = data.get("passport")
+        phone = data.get("phone")
+        username = callback.from_user.username
+
         await save_user_profile(
             chat_id=callback.from_user.id,
             nickname=nickname,
             is_itmo=is_itmo,
             level=level_data['level_id'],
-            polemica_id=polemica_id
+            polemica_id=polemica_id,
+            full_name=full_name,
+            passport=passport,
+            phone=phone,
+            username=username
         )
 
-        await callback.message.answer(
-            f"""
-            ⭐️ Ваш профиль успешно обновлен!
-            
+        profile_info = f"""
             Игровой ник: <b>{nickname}</b>
             Уровень: <b>{level_data['level_name']}</b>
             ИТМО: <b>{'Да' if is_itmo else 'Нет'}</b>
             Polemica id: <b>{polemica_id if polemica_id is not None else 'Не указан'}</b>
-            """,
+            """
+
+        if not is_itmo:
+            profile_info += f"""
+            ФИО: <b>{full_name}</b>
+            Паспорт: <b>{passport}</b>
+            Телефон: <b>{phone}</b>
+            """
+
+        await callback.message.answer(
+            f"⭐️ Ваш профиль успешно обновлен!\n{profile_info}",
             parse_mode="HTML",
             reply_markup=await kb.get_start_menu(rights="user")
         )

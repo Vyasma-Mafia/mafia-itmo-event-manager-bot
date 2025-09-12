@@ -30,3 +30,4 @@ typing-extensions==4.12
 tzdata==2024.1
 xlsxwriter==3.2.0
 yarl==1.9.4
+httpx==0.28.1

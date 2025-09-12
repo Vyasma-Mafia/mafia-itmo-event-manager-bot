@@ -157,6 +157,7 @@ async def get_event_menu(*, rights: str, event_status: str = "", event_name: str
     if rights == "admin":
         keyboard.add(KeyboardButton(text="👥Записавшиеся"))
         keyboard.add(KeyboardButton(text="❌Закрыть запись"))
+        keyboard.add(KeyboardButton(text="📬Отправить проходки"))
     else:
         if event_status == "unsigned":
             keyboard.add(KeyboardButton(text=f"📝Записаться"))
@@ -193,3 +194,9 @@ are_u_from_itmo_keyboard = ReplyKeyboardMarkup(keyboard=[
      KeyboardButton(text="Нет, я не из ИТМО")]],
     resize_keyboard=True
 )
+
+
+async def get_personal_data_agreement_keyboard():
+    keyboard = ReplyKeyboardBuilder()
+    keyboard.add(KeyboardButton(text="✅Даю согласие"))
+    return keyboard.adjust(1).as_markup(resize_keyboard=True)

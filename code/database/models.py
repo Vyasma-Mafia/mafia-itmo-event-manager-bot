@@ -60,6 +60,7 @@ class Event(Base):
     name: Mapped[str] = mapped_column(String(60))
     date: Mapped[datetime] = mapped_column(TIMESTAMP)  # Using TIMESTAMP for events
     limit: Mapped[int] = mapped_column(Integer, default=40)
+    guest_limit: Mapped[int] = mapped_column(Integer, default=20)
     description: Mapped[str] = mapped_column(String(400))
     is_signup_open: Mapped[int] = mapped_column(Integer)
     removed: Mapped[bool] = mapped_column(Boolean)
@@ -92,7 +93,11 @@ class UserProfile(Base):
     nickname: Mapped[str] = mapped_column(String(100))
     is_itmo: Mapped[bool] = mapped_column(Boolean)
     level: Mapped[int] = mapped_column(Integer)
-
+    full_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    passport: Mapped[str] = mapped_column(String(10), nullable=True)
+    phone: Mapped[str] = mapped_column(String(11), nullable=True)
+    personal_data_agreement: Mapped[bool] = mapped_column(Boolean, default=False)
+    username: Mapped[str] = mapped_column(String(100), nullable=True)
 
 
 # При запуске главного файла создаём таблицы

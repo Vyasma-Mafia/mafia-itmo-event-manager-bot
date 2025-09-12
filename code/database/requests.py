@@ -250,7 +250,6 @@ async def get_signup_people(*, event_name: str):
     async with async_session() as session:
         session.expire_all()
         session.expunge_all()
-        session.commit()
         id_of_event = (await session.scalar(select(Event).where(Event.name == event_name))).id
         people: dict = {
             "Полное имя": [],
@@ -285,8 +284,12 @@ async def save_user_profile(chat_id: int,
                             nickname: str,
                             is_itmo: bool,
                             level: int,
-                            polemica_id: Optional[int]
-                            ):
+                            polemica_id: Optional[int],
+                            full_name: Optional[str] = None,
+                            passport: Optional[str] = None,
+                            phone: Optional[str] = None,
+                            username: Optional[str] = None,
+                            personal_data_agreement: bool = False):
     async with async_session() as session:
         profile = await session.scalar(select(UserProfile).where(UserProfile.chat_id == chat_id))
         if profile:
@@ -294,12 +297,22 @@ async def save_user_profile(chat_id: int,
             profile.level = level
             profile.is_itmo = is_itmo
             profile.polemica_id = polemica_id
+            profile.full_name = full_name
+            profile.passport = passport
+            profile.phone = phone
+            profile.username = username
+            profile.personal_data_agreement = personal_data_agreement
         else:
             session.add(UserProfile(chat_id=chat_id,
                                     nickname=nickname,
                                     is_itmo=is_itmo,
                                     level=level,
-                                    polemica_id=polemica_id
+                                    polemica_id=polemica_id,
+                                    full_name=full_name,
+                                    passport=passport,
+                                    phone=phone,
+                                    username=username,
+                                    personal_data_agreement=personal_data_agreement
                                     ))
         await session.commit()
 
@@ -312,3 +325,27 @@ async def get_user_profile(chat_id: int) -> Optional[UserProfile]:
 async def get_users_with_polemica_id() -> list[UserProfile]:
     async with async_session() as session:
         return await session.scalars(select(UserProfile).where(UserProfile.polemica_id != None))
+
+
+async def get_guest_count_for_event(event_name: str) -> int:
+    async with async_session() as session:
+        id_of_event = (await session.scalar(select(Event).where(Event.name == event_name))).id
+        return await session.scalar(
+            select(func.count(EventSingUp.id)).join(UserProfile, EventSingUp.chat_id == UserProfile.chat_id).where(
+                (EventSingUp.event_status == 1) &
+                (EventSingUp.event_id == id_of_event) &
+                (UserProfile.is_itmo == False)
+            )
+        )
+
+async def get_guests_for_event(event_name: str) -> list[UserProfile]:
+    async with async_session() as session:
+        id_of_event = (await session.scalar(select(Event).where(Event.name == event_name))).id
+        result = await session.scalars(
+            select(UserProfile).join(EventSingUp, UserProfile.chat_id == EventSingUp.chat_id).where(
+                (EventSingUp.event_status == 1) &
+                (EventSingUp.event_id == id_of_event) &
+                (UserProfile.is_itmo == False)
+            )
+        )
+        return result.all()

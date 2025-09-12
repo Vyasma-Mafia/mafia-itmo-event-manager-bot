@@ -3,6 +3,7 @@ from datetime import datetime
 from re import search, compile
 
 import pandas as pd
+import httpx
 from aiogram import Router, F, Bot
 from aiogram.filters import CommandStart, Filter
 from aiogram.fsm.context import FSMContext
@@ -16,7 +17,8 @@ from database.requests import (check_ban, check_event_by_name, get_users_from_ma
                                get_event_name_by_id, get_count_of_signup,
                                del_from_mailing, get_event_info_by_name, get_signup_people,
                                check_is_signup_open, close_signup_to_event, get_count_of_events,
-                               remove_event_from_table, get_unremoved_events, get_chat_ids_for_users_in_mailing)
+                               remove_event_from_table, get_unremoved_events, get_chat_ids_for_users_in_mailing,
+                               get_guests_for_event)
 from utils import setup_logger
 
 # Чтобы не писать dispatcher 2-й раз заменим его на роутер
@@ -472,3 +474,58 @@ async def btn_signup_click(message: Message, state: FSMContext):
         await message.answer_document(document=FSInputFile(path=os.path.join(os.getcwd(), f"{event_name}.xlsx")))
         # Удаляем файл из текущей директории
         os.remove(os.path.join(os.getcwd(), f"{event_name}.xlsx"))
+
+
+@admin.message(AdminProtect(), EventChoice.event_name, F.text == "📬Отправить проходки")
+async def btn_send_passes_click(message: Message, state: FSMContext):
+    data_from_state: dict = await state.get_data()
+    event_name: str = data_from_state.get("event_name")
+    guests = await get_guests_for_event(event_name)
+    event_info = await get_event_info_by_name(event_name=event_name)
+    if not guests:
+        await message.answer("На мероприятие не записан ни один гость.")
+        return
+
+    successful_sends = 0
+    failed_sends = 0
+
+    async with httpx.AsyncClient() as client:
+        for guest in guests:
+            payload = {
+                "fio": guest.full_name,
+                "contacts": f"t.me/{guest.username}",
+                "from_itmo": ["114298929"],
+                "occupation": ["114298576"],
+                "occupation_custom": "Игрок в мафию",
+                "phone": guest.phone,
+                "passport": guest.passport,
+                "citizenship": ["114299256"],
+                "corpus": ["114300051"],
+                "has_pass": ["114300643"],
+                "event": ["114305512"],
+                "date": event_info.date.strftime('%Y-%m-%d'),
+                "personal_data": True
+            }
+            try:
+                # Вставить URL
+                response = await client.post(
+                    "https://api.forms.yandex.net/v1/surveys/66f6cb8773cee77dbdffbd87/form?dry_run=true",
+                    json=payload
+                )
+                logger.info(payload)
+                if response.status_code == 200:
+                    successful_sends += 1
+                    try:
+                        await BOT.send_message(chat_id=guest.chat_id, text=f"Вам оформлена проходка на мероприятие {event_name}")
+                    except Exception as e:
+                        logger.error(f"Не удалось отправить уведомление пользователю {guest.chat_id}: {e}")
+                else:
+                    failed_sends += 1
+                    logger.error(
+                        f"Failed to send pass for {guest.full_name}. Status: {response.status_code}, Body: {response.text}")
+            except httpx.RequestError as e:
+                failed_sends += 1
+                logger.error(f"Error sending request for {guest.full_name}: {e}")
+
+    await message.answer(
+        f"Отправка проходок завершена.\nУспешно: {successful_sends}\nНеудачно: {failed_sends}")
