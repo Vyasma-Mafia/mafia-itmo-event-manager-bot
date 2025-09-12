@@ -433,24 +433,24 @@ async def btn_signup_click(message: Message, state: FSMContext):
 
             elif current_signups >= event_info.limit:
                 await message.answer("К сожалению, достигнут лимит участников для этого мероприятия.")
-            else:
-                # получим данные пользователя
-                user_profile = await get_user_profile(chat_id=message.from_user.id)
-                print(user_profile.__dict__, '\n\n')
-                await state.update_data(full_name=user_profile.nickname,
-                                        id=message.from_user.id,
-                                        level=user_profile.level,
-                                        username=message.from_user.username)
-                level_symbol = kb.get_level_info_by_id(
-                    user_profile.level)['level_symbol']
-                await message.answer(f"Подтвердите запись на мероприятие!"
-                                     f"\n🎉Название мероприятия : {event_name}"
-                                     f"\n📒Ваши данные : "
-                                     f"\n👤Игровой ник : {user_profile.nickname}"
-                                     f"\n👤Уровень : {level_symbol}"
-                                     f"\n👤Ваш Telegram ник : @{message.from_user.username}",
-                                     reply_markup=await kb.get_confirm_menu("confirm_signup"))
-                await state.set_state(EventSignUp.confirm)
+
+            # получим данные пользователя
+            user_profile = await get_user_profile(chat_id=message.from_user.id)
+            print(user_profile.__dict__, '\n\n')
+            await state.update_data(full_name=user_profile.nickname,
+                                    id=message.from_user.id,
+                                    level=user_profile.level,
+                                    username=message.from_user.username)
+            level_symbol = kb.get_level_info_by_id(
+                user_profile.level)['level_symbol']
+            await message.answer(f"Подтвердите запись на мероприятие!"
+                                 f"\n🎉Название мероприятия : {event_name}"
+                                 f"\n📒Ваши данные : "
+                                 f"\n👤Игровой ник : {user_profile.nickname}"
+                                 f"\n👤Уровень : {level_symbol}"
+                                 f"\n👤Ваш Telegram ник : @{message.from_user.username}",
+                                 reply_markup=await kb.get_confirm_menu("confirm_signup"))
+            await state.set_state(EventSignUp.confirm)
 
         else:
             await message.answer("Вы уже записались на это мерпориятие!")
@@ -479,8 +479,6 @@ async def confirm_signup_callback(callback: CallbackQuery, state: FSMContext):
             username=username,
             level=user_level
         )
-        if not user.is_itmo:
-            await callback.message.answer("Не забудьте заполнить форму для проходки из /help")
         await callback.message.answer("Вы успешно записались!", reply_markup=await kb.get_events_names_buttons())
         await state.clear()
     else:
