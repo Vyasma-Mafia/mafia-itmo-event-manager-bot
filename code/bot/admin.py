@@ -522,7 +522,8 @@ async def btn_send_passes_click(message: Message, state: FSMContext):
                 if response.status_code == 200:
                     successful_sends += 1
                     try:
-                        await BOT.send_message(chat_id=guest.chat_id, text=f"Вам оформлена проходка на мероприятие {event_name}")
+                        # await BOT.send_message(chat_id=guest.chat_id, text=f"Вам оформлена проходка на мероприятие {event_name}")
+                        pass
                     except Exception as e:
                         logger.error(f"Не удалось отправить уведомление пользователю {guest.chat_id}: {e}")
                 else:
