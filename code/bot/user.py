@@ -14,7 +14,8 @@ from database.requests import (check_ban, check_event_by_name, add_in_mailing, g
                                check_go_to_event, get_full_info_about_singup_user, change_signup_status,
                                add_signup_user,
                                get_count_of_events, check_is_signup_open, get_signup_people, get_user_profile,
-                               save_user_profile, get_users_with_polemica_id, get_guest_count_for_event)
+                               save_user_profile, get_users_with_polemica_id, get_guest_count_for_event,
+                               check_passes_sent)
 from plugins.achievements import get_user_achievements_text, get_club_stars_achievements_text
 from plugins.rating import get_club_rating
 from plugins.research import get_pair_stat_text
@@ -296,6 +297,11 @@ async def btn_event_name_click(message: Message, state: FSMContext, event_name: 
     event_status = 'unsigned' if is_signup_open is not None else ''
     guest_count = await get_guest_count_for_event(event_name=event_name)
     event_info_for_message += f"👥Гостей: {guest_count}/{event_info.guest_limit}\n"
+    
+    # Добавить информацию о статусе проходок
+    passes_sent = await check_passes_sent(event_name=event_name)
+    if passes_sent:
+        event_info_for_message += "🚫 Запись гостей закрыта (проходки отправлены)\n"
 
     # Get the list of registered users
     registered_users = await get_signup_people(event_name=event_name)
@@ -421,6 +427,11 @@ async def btn_signup_click(message: Message, state: FSMContext):
                     reply_markup=await kb.get_start_menu(rights="user")
                 )
             elif not user_profile.is_itmo:
+                # Проверить, отправлены ли уже проходки
+                if await check_passes_sent(event_name=event_name):
+                    await message.answer("Запись гостей на это мероприятие закрыта - проходки уже отправлены.")
+                    return
+                
                 if not all([user_profile.full_name, user_profile.passport, user_profile.phone]):
                     await message.answer("Для записи на мероприятие, пожалуйста, заполните ФИО, паспорт и телефон в вашем профиле. "
                                          "Эти данные необходимы для оформления проходки в университет.")

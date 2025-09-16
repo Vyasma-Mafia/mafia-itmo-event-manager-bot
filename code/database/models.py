@@ -64,6 +64,7 @@ class Event(Base):
     description: Mapped[str] = mapped_column(String(400))
     is_signup_open: Mapped[int] = mapped_column(Integer)
     removed: Mapped[bool] = mapped_column(Boolean)
+    passes_sent: Mapped[bool] = mapped_column(Boolean, default=False)
 
 
 # Таблица для записавшихся на меропрития пользователей

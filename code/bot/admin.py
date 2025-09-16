@@ -18,7 +18,7 @@ from database.requests import (check_ban, check_event_by_name, get_users_from_ma
                                del_from_mailing, get_event_info_by_name, get_signup_people,
                                check_is_signup_open, close_signup_to_event, get_count_of_events,
                                remove_event_from_table, get_unremoved_events, get_chat_ids_for_users_in_mailing,
-                               get_guests_for_event)
+                               get_guests_for_event, mark_passes_sent, check_passes_sent)
 from utils import setup_logger
 
 # Чтобы не писать dispatcher 2-й раз заменим его на роутер
@@ -480,6 +480,12 @@ async def btn_signup_click(message: Message, state: FSMContext):
 async def btn_send_passes_click(message: Message, state: FSMContext):
     data_from_state: dict = await state.get_data()
     event_name: str = data_from_state.get("event_name")
+    
+    # Проверить, не отправлены ли уже проходки
+    if await check_passes_sent(event_name=event_name):
+        await message.answer("Проходки для этого мероприятия уже были отправлены.")
+        return
+    
     guests = await get_guests_for_event(event_name)
     event_info = await get_event_info_by_name(event_name=event_name)
     if not guests:
@@ -527,5 +533,9 @@ async def btn_send_passes_click(message: Message, state: FSMContext):
                 failed_sends += 1
                 logger.error(f"Error sending request for {guest.full_name}: {e}")
 
+    # После успешной отправки отметить проходки как отправленные
+    await mark_passes_sent(event_name=event_name)
+    
     await message.answer(
-        f"Отправка проходок завершена.\nУспешно: {successful_sends}\nНеудачно: {failed_sends}")
+        f"Отправка проходок завершена.\nУспешно: {successful_sends}\nНеудачно: {failed_sends}\n"
+        f"⚠️ Запись новых гостей на мероприятие заблокирована.")

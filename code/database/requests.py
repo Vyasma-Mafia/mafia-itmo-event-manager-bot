@@ -349,3 +349,23 @@ async def get_guests_for_event(event_name: str) -> list[UserProfile]:
             )
         )
         return result.all()
+
+
+async def mark_passes_sent(*, event_name: str):
+    """Отметить, что проходки для мероприятия отправлены"""
+    async with async_session() as session:
+        await session.execute(
+            update(Event)
+            .where(Event.name == event_name)
+            .values(passes_sent=True)
+        )
+        await session.commit()
+
+
+async def check_passes_sent(*, event_name: str) -> bool:
+    """Проверить, отправлены ли проходки для мероприятия"""
+    async with async_session() as session:
+        event = await session.scalar(
+            select(Event).where(Event.name == event_name)
+        )
+        return event.passes_sent if event else False
