@@ -515,7 +515,7 @@ async def btn_send_passes_click(message: Message, state: FSMContext):
             try:
                 # Вставить URL
                 response = await client.post(
-                    "https://api.forms.yandex.net/v1/surveys/66f6cb8773cee77dbdffbd87/form?dry_run=true",
+                    "https://api.forms.yandex.net/v1/surveys/66f6cb8773cee77dbdffbd87/form?dry_run=false",
                     json=payload
                 )
                 logger.info(payload)
