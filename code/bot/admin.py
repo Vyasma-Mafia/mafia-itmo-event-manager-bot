@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 from re import search, compile
 
@@ -495,6 +496,9 @@ async def btn_send_passes_click(message: Message, state: FSMContext):
     successful_sends = 0
     failed_sends = 0
 
+    await message.answer(
+        f"Началась отправка сообщений для {len(guests)} гостей. Это займет примерно {len(guests) * 6} секунд")
+
     async with httpx.AsyncClient() as client:
         for guest in guests:
             payload = {
@@ -522,8 +526,7 @@ async def btn_send_passes_click(message: Message, state: FSMContext):
                 if response.status_code == 200:
                     successful_sends += 1
                     try:
-                        # await BOT.send_message(chat_id=guest.chat_id, text=f"Вам оформлена проходка на мероприятие {event_name}")
-                        pass
+                        await BOT.send_message(chat_id=guest.chat_id, text=f"Вам оформлена проходка на мероприятие {event_name}")
                     except Exception as e:
                         logger.error(f"Не удалось отправить уведомление пользователю {guest.chat_id}: {e}")
                 else:
@@ -533,6 +536,7 @@ async def btn_send_passes_click(message: Message, state: FSMContext):
             except httpx.RequestError as e:
                 failed_sends += 1
                 logger.error(f"Error sending request for {guest.full_name}: {e}")
+            time.sleep(5)
 
     # После успешной отправки отметить проходки как отправленные
     await mark_passes_sent(event_name=event_name)
