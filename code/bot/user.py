@@ -442,7 +442,7 @@ async def btn_signup_click(message: Message, state: FSMContext):
                     await message.answer("К сожалению, достигнут лимит гостей для этого мероприятия.")
                     return
 
-            elif current_signups >= event_info.limit:
+            if current_signups >= event_info.limit:
                 await message.answer("К сожалению, достигнут лимит участников для этого мероприятия.")
 
             # получим данные пользователя
