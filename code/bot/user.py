@@ -319,7 +319,7 @@ async def btn_event_name_click(message: Message, state: FSMContext, event_name: 
         level_symbol = next(
             (level['level_symbol'] for level in kb.LEVEL_DESCR if level['level_id'] == level_id), '')
 
-        registered_users_list += f"{i}. {nick} {level_symbol} - @{username} - <i>{college}</i>\n"
+        registered_users_list += f"{i}. {level_symbol} {nick} - @{username} - <i>{college}</i>\n"
 
     registered_users_str = registered_users_str.format(
         registered_users_list=registered_users_list)
